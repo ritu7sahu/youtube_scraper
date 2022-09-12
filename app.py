@@ -217,7 +217,7 @@ def getAllDetails(links, driver):
 
         if (boolVal == True):
             try:
-                dir = 'G:/videos/' + (channel.replace(" ", "")).lower() + "/"
+                dir = 'file:///G:/videos/' + (channel.replace(" ", "")).lower() + "/"
                 if os.path.exists(dir):
                     shutil.rmtree(dir)
             except Exception as e:
@@ -259,7 +259,7 @@ def getAllDetails(links, driver):
 def downloadVideo(link,i,title,channel):
     # ("Code started for downloding video")
     try:
-        DOWNLOAD_PATH = 'G:/videos/'+(channel.replace(" ", "")).lower()+"/"
+        DOWNLOAD_PATH = 'file:///G:/videos/'+(channel.replace(" ", "")).lower()+"/"
         if not os.path.exists(DOWNLOAD_PATH):
             os.makedirs(DOWNLOAD_PATH)
         yt = YouTube(link)
