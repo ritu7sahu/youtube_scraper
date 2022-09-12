@@ -20,8 +20,8 @@ SECRET_KEY = 'RVwn28l+kQIsR0k7VuqxfJZOe1td1LntpblVOAa6'
 # ("connecting mysql and mongodb")
 
 try:
-    mydb = connection.connect(host="localhost", user="root", password="Root@123")
-    cursor = mydb.cursor()
+    # mydb = connection.connect(host="localhost", user="root", password="Root@123")
+    # cursor = mydb.cursor()
     client = pymongo.MongoClient("mongodb+srv://ritusahu:ritusahupwd@cluster0.telj5.mongodb.net/?retryWrites=true&w=majority")
 except Exception as e:
     print(e)
@@ -82,9 +82,10 @@ def get_comments():
 def getAllDataFromDB():
     # ("getting all youtuber details from database")
     try:
-        cursor.execute('select * from youtubeScraper.youtuberscraperdata')
-        yt_details = cursor.fetchall()
-        mydb.commit()
+        database = client['youtubeData']
+        collection = database['youtuberscraperdata']
+        # ("getting all comments from link")
+        yt_details = collection.find()
     except Exception as e:
         print(e)
     return {'details':yt_details}
@@ -143,7 +144,7 @@ def getVideosLinks(driver,videos_in_no):
                     break
             else:
                 print("Found:", len(yt_urls), "links, looking for more ...")
-                time.sleep(30)
+                time.sleep(5)
                 return
     except Exception as e:
         print(e)
@@ -315,37 +316,48 @@ def upload_to_aws(file,channel):
 def databaseRelated():
     # ("creating database & table")
     try:
-        cursor.execute('CREATE DATABASE IF NOT EXISTS youtubeScraper')
-        # ("creating tables")
-        yt_info = 'create table if not exists youtubeScraper.youtuberscraperdata( youtuber_name varchar(50),video_link varchar(50),downloaded_video_path varchar(50),aws_link varchar(100),likes varchar(20),no_of_comments varchar(20),title varchar(100))'
-        cursor.execute(yt_info)
+        # cursor.execute('CREATE DATABASE IF NOT EXISTS youtubeScraper')
+        # # ("creating tables")
+        # yt_info = 'create table if not exists youtubeScraper.youtuberscraperdata( youtuber_name varchar(50),video_link varchar(50),downloaded_video_path varchar(50),aws_link varchar(100),likes varchar(20),no_of_comments varchar(20),title varchar(100))'
+        # cursor.execute(yt_info)
         cwd = os.getcwd()+"\youtuberInfo.csv"
         yt_df = pd.read_csv(cwd)
-        # ("Iterating dataframe & inserting records in mysql")
-        for (rows, rs) in yt_df.iterrows():
-            # ("Checking for duplicate records")
-            record = 'select count(*) as count from youtubeScraper.youtuberscraperdata where video_link ="' + str(
-                rs[1]) + '"'
-            cursor.execute(record)
-            rowcount = cursor.fetchone()[0]
-            if (rowcount > 0):
-                continue
+        payload_yt = json.loads(yt_df.to_json(orient='records'))
+        database = client['youtubeData']
+        collection1 = database['youtuberscraperdata']
+        # ("Iterating dataframe & inserting comments record in mongodb")
+        for data in payload_yt:
+            get = collection1.count_documents({'video_link': data['yt_link']})
+            if (get == 0):
+                collection1.insert_one(data)
             else:
-                # qry = "insert into youtubeScraper.youtuberscraperdata values(""'" + str(rs[0]) + "','" + str(
-                # rs[1]) + "','" + str(rs[2]) + "','" + str(rs[3]) + "','" + str(rs[4]) + "','" + str(
-                # rs[5]) + "','" + str(rs[6]) + "')"
+                pass
 
-                qry = 'insert into youtubeScraper.youtuberscraperdata values(''"' + str(rs[0]) + '","'+ str(
-                    rs[1]) + '","' + str(rs[2]) + '","' + str(rs[3]) + '","' + str(rs[4]) + '","' + str(
-                    rs[5]) + '","' + str(rs[6]) + '")'
-                print(qry)
-                cursor.execute(qry)
-                mydb.commit()
+        # ("Iterating dataframe & inserting records in mysql")
+        # for (rows, rs) in yt_df.iterrows():
+        #     # ("Checking for duplicate records")
+        #     record = 'select count(*) as count from youtubeScraper.youtuberscraperdata where video_link ="' + str(
+        #         rs[1]) + '"'
+        #     cursor.execute(record)
+        #     rowcount = cursor.fetchone()[0]
+        #     if (rowcount > 0):
+        #         continue
+        #     else:
+        #         # qry = "insert into youtubeScraper.youtuberscraperdata values(""'" + str(rs[0]) + "','" + str(
+        #         # rs[1]) + "','" + str(rs[2]) + "','" + str(rs[3]) + "','" + str(rs[4]) + "','" + str(
+        #         # rs[5]) + "','" + str(rs[6]) + "')"
+        #
+        #         qry = 'insert into youtubeScraper.youtuberscraperdata values(''"' + str(rs[0]) + '","'+ str(
+        #             rs[1]) + '","' + str(rs[2]) + '","' + str(rs[3]) + '","' + str(rs[4]) + '","' + str(
+        #             rs[5]) + '","' + str(rs[6]) + '")'
+        #         print(qry)
+        #         cursor.execute(qry)
+        #         mydb.commit()
         # ("data inserted")
         csv_path = os.getcwd() + "\comments.csv"
         # yt_df = pd.read_csv(cwd)
-        data = pd.read_csv(csv_path)
-        payload = json.loads(data.to_json(orient='records'))
+        data1 = pd.read_csv(csv_path)
+        payload = json.loads(data1.to_json(orient='records'))
         database = client['youtubeData']
         collection = database['youtuberCommentsDetails']
         # ("Iterating dataframe & inserting comments record in mongodb")

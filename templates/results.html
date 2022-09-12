@@ -49,16 +49,16 @@
 
                 {% for info in data %}
                <tr>
-                 <td>{{info[0]}}</td>
-                 <td>{{info[6]}}</td>
-                 <td>{{info[1]}}</td>
-                 <td>{{info[5]}}</td>
-                 <td>{{info[4]}} </td>
-                 <td>{{info[2]}}</td>
-                 <td>{{info[3]}} </td>
+                 <td>{{info['channel']}}</td>
+                 <td>{{info['title']}}</td>
+                 <td>{{info['yt_link']}}</td>
+                 <td>{{info['no_of_comments']}}</td>
+                 <td>{{info['likes']}} </td>
+                 <td>{{info['downloaded_video_path']}}</td>
+                 <td>{{info['aws_link']}} </td>
                  <td>
                      <form method="POST" action="/get_comments">
-                         <input type="hidden" name="link" value="{{info[1]}}">
+                         <input type="hidden" name="link" value="{{info['yt_link']}}">
                          <input type="submit" value="comments">
                      </form>
                  </td>
